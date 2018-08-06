@@ -1,0 +1,18 @@
+%行向量转置为列向量
+x1 = x(:);
+y1 = y(:);
+c=1;
+ s=ones(1,2000);
+for i =1:2000
+ A=polyfit(x1,y1,i);
+ yN=polyval(A,x1);
+ %求出方差
+ s(i)=sum((y1-yN).^2);
+  if s(c)>=s(i)
+      c = i;
+ end
+end
+
+A=polyfit(x1,y1,c);
+yN=polyval(A,x1);
+plot(x1,y1,x1,yN)
