@@ -1,0 +1,97 @@
+% x y生成的matlab代码：
+% 
+% x=[-10:0.1:10];
+% y=0.3*x.^3-0.7*x.^2+x+5+10*randn(1,length(x));
+% plot(x,y,'.')
+
+
+% 乔志健的解决方案
+
+
+%除了x y 变量其他都清除
+clearvars -except x y
+syms t F
+%设置vpa函数的精度
+digits(4)
+%新建自变量
+x=[-100:0.1:100];
+%模拟实际中的测量噪声
+r=10000*randn(1,length(x));
+%用匿名函数实现的多项式解析式
+f=@(x) 0.1*x.^3+10*x.^2-400*x+5+r;
+%生成因变量数据
+y=f(x);
+%计算最佳阶数（法一）
+%初始化最佳参数
+bestN=1;
+%初始化最小误差为inf
+minError=inf;
+%最佳拟合多项式系数
+bestY=0;
+%对阶数1-5进行遍历，以拟合结果与真实结果的mse最小为目标最优，得出最佳参数
+for i=1:5
+    %拟合解析式
+    Y=polyfit(x,y,i);
+    %将原始数据代入解析式求出拟合解
+    y2=polyval(Y,x);
+    %计算拟合误差
+    e=mse(y-y2);
+    %更新最佳参数
+    if e<minError
+        minError=e;
+        bestN=i;
+        bestY=Y;
+    end
+end
+%vpa实现了bestY保留四位小数
+%解析式字符输出
+F=vpa(bestY)*[t^5;t^4;t^3;t^2;t;1]
+%计算最佳阶数（法二）
+bestN2=0;minError=inf;bestY2=0;
+%阶数1-5遍历
+for m=1:5
+    %k折交叉验证
+    k=3;
+    clear e
+    %使用随机法生成训练集和验证集
+    indices = crossvalind('Kfold',length(x),k);
+    %对k折交叉验证的误差进行计算
+    for i = 1:k
+        %得到k折CV集
+        %此处test为logical数组，可以用于数组索引
+        test = (indices == i); train = ~test;
+        %生成训练集索引
+        p_train=x(train);t_train=y(train);
+        %生成验证集索引
+        p_test=x(test);t_test=y(test);
+        %拟合
+        Y2=polyfit(p_train,t_train,m);
+        y2=polyval(Y2,p_test);
+        e(k)=mse(t_test-y2);
+    end
+    %更新最优解
+    if mean(e)<minError
+       minError=mean(e);
+       bestN2=m;
+    end
+end
+%用最优多项式参数代回计算
+bestY2=polyfit(x,y,bestN2);
+%此处可能报错，因为最优解可能求得不是3阶，这也体现了k折交叉验证也有一定的缺陷
+T = ones(bestN2+1,1);
+for i=bestN2:1
+   T(i+1)=t^i;
+end
+F=vpa(bestY2)*T
+%泛化能力测试，如果法二拟合的最优阶数是3，下面这段代码可以看出两者在泛化能力上的差别
+x_check=[-300:0.1:-100];%自变量区间变了，以此检测泛化能力
+y_check=f(x_check);
+plot(x_check,y_check,'.')
+hold on
+plot(x_check,polyval(bestY,x_check),'.')
+hold on
+plot(x_check,polyval(bestY2,x_check),'.')
+legend('原始','法一','法二')
+%在数据建模中，不是越准越好，要使用k折交叉验证对其泛化能力进行测验，选出最佳模型。k折交叉验证的
+%的划分规则也有多种，有随机的，时序的，等分布的等等
+%详细参考网上对k折交叉验证的介绍和机器学习第一章
