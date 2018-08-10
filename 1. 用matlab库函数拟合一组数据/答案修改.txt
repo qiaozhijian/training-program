@@ -78,9 +78,11 @@ end
 %用最优多项式参数代回计算
 bestY2=polyfit(x,y,bestN2);
 %此处可能报错，因为最优解可能求得不是3阶，这也体现了k折交叉验证也有一定的缺陷
-T = ones(bestN2+1,1);
-for i=bestN2:1
-   T(i+1)=t^i;
+T = sym('T',[bestN2+1,1]);
+temp=bestN2+1;
+for i=1:bestN2+1
+   temp=temp-1;
+   T(i)=t^(temp);
 end
 F=vpa(bestY2)*T
 %泛化能力测试，如果法二拟合的最优阶数是3，下面这段代码可以看出两者在泛化能力上的差别

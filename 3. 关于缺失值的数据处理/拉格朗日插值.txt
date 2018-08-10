@@ -1,0 +1,77 @@
+[data,~,~]=xlsread('/Users/xufengrong/Documents/GitHub/training-program/3. 关于缺失值的数据处理/数据');
+
+% y=data(:,1);
+% x=[1:1:length(y)]';
+% 插值插5个点
+n=10;
+Freturn=cell(1,10);
+for count=1:10
+    y=data(:,count);
+    x=[1:1:length(y)]';
+    FindRegressPoint(x,y,n)
+end
+
+function[F1]=FindRegressPoint(x,y,n)
+%遍历所有的数找到当前_(:з」∠)无穷大的点
+    index = 1;
+    for j=1:length(y)
+        if isnan(y(j))==1
+            nanIndex(index)=j;
+            index = index +1;
+        end
+    end
+    F1=ones(1,length(nanIndex));
+    % 将所有的nan的索引号寻找周围插值n个点
+    for h=1:length(nanIndex)
+        %求出前一半的插值所需点的数量
+        regressFrontPointNum = fix(n/2);
+
+        %数据在数组前和数组末尾，可能会越界访问
+        if nanIndex(h)<=fix(n/2)
+            regressFrontPointNum = nanIndex(h) - 1;
+        elseif (length(y)-nanIndex(h))<fix(n/2)
+            regressFrontPointNum = n - (length(x) - nanIndex(h));
+        end
+
+
+        pointNum = 1;
+        offset=nanIndex(h)-regressFrontPointNum;
+        while pointNum<=n
+            if offset==nanIndex(h)||isnan( y(offset))
+                offset = offset +1;
+                continue
+            end
+
+            if offset>length(y)
+                break 
+            end
+
+            xU(pointNum)=x(offset);
+            yU(pointNum)=y(offset);
+
+            pointNum=pointNum+1; 
+            offset = offset +1;
+        end
+
+        F1(h)=subs(LagrangianInterpolation(n,xU,yU),x(nanIndex(h)))
+
+    end
+end
+% function[s]=LagrangianInterpolation(x1,x2,x,y)
+function[F]=LagrangianInterpolation(n,x,y)
+    F = 1; 
+    l=1;
+    syms t;
+    for i=1:n
+        for a=1:n
+%           将
+            if a~=i
+               l=l*(t-x(a))/(x(i)-x(a));
+            end
+        end
+        F=F + y(i)*l;
+        l=1;
+    end
+    F=F;
+end
+

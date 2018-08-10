@@ -1,0 +1,56 @@
+%行向量转置为列向量
+x1 = x(:);
+y1 = y(:);
+%设置vpa精度
+digits(4)
+% MyselfFit(x1,y1,1);
+power = 9;
+
+
+BIAO=polyfit(x1,y1,power)
+WODE=MyselfFit(x1,y1,power)
+normalFitY=polyval(BIAO,x1);
+myFitY=polyval(WODE,x1);
+
+
+
+plot(x1,y1,x1,myFitY)
+hold on
+plot(x1,normalFitY)
+
+function[a] = MyselfFit(x,y,m)
+A = ones(length(x),m);
+syms t F;
+for line=1:size(x,1)
+    for row=1:m
+        A(line,row+1)=x(line)^row;
+    end
+    
+end
+
+%A的转置矩阵
+At = A';
+a=(At*A)\(At*y)
+% 将a转换为高次幂在前面的向量
+changeNeedTime=fix(length(a)/2);
+highaPosition= length(a);
+for lowAPosition=1:changeNeedTime
+    temp=a(lowAPosition);
+    a(lowAPosition)=a(highaPosition);
+    a(highaPosition)=temp;
+    highaPosition=highaPosition-1;
+end
+%转置为行向量
+a=a';
+%生成函数表达式
+T = sym('T',[m+1,1]);
+for i=1:m+1
+   T(i)=t^(i-1);
+end
+% 行向量列向量相乘
+F=vpa(a)*T
+
+end
+
+
+
