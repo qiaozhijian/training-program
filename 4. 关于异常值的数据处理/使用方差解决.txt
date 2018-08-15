@@ -1,0 +1,52 @@
+y=dataRaw(1,:);
+% x=ones(1,length(y));
+%选取点数量
+n = 40; 
+yHandle =y;
+plot(y)
+lengthy=length(y);
+if mod(length(y),n) == 0
+ groupNum =  fix(length(y)/n) ;
+else 
+ groupNum = fix(length(y)/n) + 1 ;
+end 
+groupAverage=ones(groupNum,1);
+groupVariance=ones(groupNum,1);
+groupVarianceSqrt=ones(groupNum,1);
+Y=ones(groupNum,n);
+% 将向量切割成为矩阵
+for group = 1:groupNum
+    Y(group,:)=y(1,1 + (group -1) * n:group * n);
+end
+%求和
+groupSum = sum(Y,2);
+%求平均，求方差 3西格玛原则
+for group = 1:groupNum
+    inGroupCnt = size(Y(group,:),2);
+    groupAverage(group)=groupSum(group)/inGroupCnt;
+    for pointCnt = 1:inGroupCnt
+        groupVariance(group)=groupVariance(group)+((Y(group,pointCnt) - groupAverage(group))^2)/inGroupCnt;
+    end    
+    groupVarianceSqrt(group) = sqrt(groupVariance(group));
+
+end
+abnormalPointCnt = 0;
+%筛选
+for group = 1:groupNum
+    inGroupCnt = size(Y(group,:),2);
+    for pointCnt = 1:inGroupCnt
+        if Y(group,pointCnt)> groupAverage(group) + groupVarianceSqrt(group)|| Y(group,pointCnt) < groupAverage(group) - groupVarianceSqrt(group)
+            yHandle((group -  1)*n + pointCnt - abnormalPointCnt) =  [];
+            abnormalPointCnt = abnormalPointCnt+ 1;
+%           abnormal(abnormalPointCnt) = Y(group,pointCnt)
+            abnormalPointIndex((group -  1)*n + pointCnt)= (group -  1)*n + pointCnt ; 
+            
+        end
+    end    
+
+end
+hold on
+plot(yHandle);
+
+
+
